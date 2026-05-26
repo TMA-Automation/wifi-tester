@@ -82,4 +82,71 @@ public class DefectDetectorTests
         d.OnThroughputSample(new ThroughputSample(DateTimeOffset.UnixEpoch, 5, 5, "srv"));
         Assert.Contains(defects, x => x.Type == DefectType.ThroughputDrop);
     }
+
+    [Fact]
+    public void Weak_signal_reports_once_then_escalates_to_critical()
+    {
+        var (d, defects, c) = Make();
+        d.OnWifiSample(Wifi(c.Now, -78));               // start epizodu (Warning, -78)
+        c.Advance(TimeSpan.FromSeconds(35));
+        d.OnWifiSample(Wifi(c.Now, -78));               // Warning zgłoszony
+        c.Advance(TimeSpan.FromSeconds(5));
+        d.OnWifiSample(Wifi(c.Now, -78));               // dalej Warning -> brak ponownego zgłoszenia
+        var afterWarning = defects.Count(x => x.Type == DefectType.WeakSignal);
+        Assert.Equal(1, afterWarning);
+
+        c.Advance(TimeSpan.FromSeconds(5));
+        d.OnWifiSample(Wifi(c.Now, -85));               // pogorszenie do Critical -> jednorazowa eskalacja
+        Assert.Contains(defects, x => x.Type == DefectType.WeakSignal && x.Severity == Severity.Critical);
+        Assert.Equal(2, defects.Count(x => x.Type == DefectType.WeakSignal));
+    }
+
+    [Fact]
+    public void Weak_signal_resets_after_recovery_and_can_retrigger()
+    {
+        var (d, defects, c) = Make();
+        d.OnWifiSample(Wifi(c.Now, -78));
+        c.Advance(TimeSpan.FromSeconds(35));
+        d.OnWifiSample(Wifi(c.Now, -78));               // 1. Warning
+        d.OnWifiSample(Wifi(c.Now, -50));               // powrót sygnału -> reset epizodu
+        d.OnWifiSample(Wifi(c.Now, -78));               // nowy epizod start
+        c.Advance(TimeSpan.FromSeconds(35));
+        d.OnWifiSample(Wifi(c.Now, -78));               // 2. Warning (nowy epizod)
+        Assert.Equal(2, defects.Count(x => x.Type == DefectType.WeakSignal));
+    }
+
+    [Fact]
+    public void Disconnect_resets_weak_signal_episode()
+    {
+        var (d, defects, c) = Make();
+        d.OnWifiSample(Wifi(c.Now, -78));
+        c.Advance(TimeSpan.FromSeconds(20));            // jeszcze poniżej progu 30s
+        d.OnWifiSample(new WifiSample(c.Now, "Wi-Fi", WifiState.Disconnected,
+            null, null, 0, 0, WifiBand.Unknown, 0, null, 0, 0));  // reset
+        c.Advance(TimeSpan.FromSeconds(20));
+        d.OnWifiSample(Wifi(c.Now, -78));               // liczenie sustain zaczyna się od nowa
+        Assert.DoesNotContain(defects, x => x.Type == DefectType.WeakSignal);
+    }
+
+    [Fact]
+    public void Roaming_spread_over_time_does_not_raise_storm()
+    {
+        var (d, defects, c) = Make();
+        for (int i = 0; i < 5; i++)
+        {
+            d.OnWifiEvent(new WifiEvent(c.Now, WifiEventType.Roamed, "ap1", "ap2", null));
+            c.Advance(TimeSpan.FromMinutes(2));         // > okno 5 min na 4 zdarzenia
+        }
+        Assert.DoesNotContain(defects, x => x.Type == DefectType.RoamingStorm);
+    }
+
+    [Fact]
+    public void Packet_loss_at_threshold_boundary_does_not_raise()
+    {
+        var (d, defects, c) = Make();
+        // 1 strata / 20 = 5%, a próg to "> 5%" -> nie zgłasza
+        for (int i = 0; i < 20; i++)
+            d.OnLatencySample(new LatencySample(c.Now, "8.8.8.8", 10, Success: i != 0));
+        Assert.DoesNotContain(defects, x => x.Type == DefectType.PacketLoss);
+    }
 }

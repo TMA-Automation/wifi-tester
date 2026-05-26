@@ -15,6 +15,7 @@ public sealed class MonitorLoop
     private readonly Repository _repo;
     private readonly DefectDetector _detector;
     private DateTimeOffset _lastThroughput = DateTimeOffset.MinValue;
+    private DateTimeOffset _lastPurge = DateTimeOffset.MinValue;
 
     public MonitorLoop(MonitorConfig cfg, IWifiSource wifi, INetworkProbe probe,
         IThroughputTester throughput, Repository repo, IClock clock)
@@ -30,27 +31,41 @@ public sealed class MonitorLoop
         Console.WriteLine("WifiTester host uruchomiony. Ctrl+C aby zakończyć.");
         while (!ct.IsCancellationRequested)
         {
-            var sample = _wifi.Sample();
-            _repo.SaveWifiSample(sample);
-            _detector.OnWifiSample(sample);
-
-            foreach (var target in _cfg.PingTargets)
+            // Jeden zły cykl (np. wyjątek SQLite, błąd procesu netsh) nie może ubić agenta 24/7.
+            try
             {
-                var lat = await _probe.PingAsync(target, ct);
-                _repo.SaveLatencySample(lat);
-                _detector.OnLatencySample(lat);
+                var sample = _wifi.Sample();
+                _repo.SaveWifiSample(sample);
+                _detector.OnWifiSample(sample);
+
+                foreach (var target in _cfg.PingTargets)
+                {
+                    var lat = await _probe.PingAsync(target, ct);
+                    _repo.SaveLatencySample(lat);
+                    _detector.OnLatencySample(lat);
+                }
+
+                if (_cfg.ThroughputEnabled &&
+                    DateTimeOffset.Now - _lastThroughput > TimeSpan.FromMinutes(_cfg.ThroughputIntervalMinutes))
+                {
+                    var tp = await _throughput.MeasureAsync(ct);
+                    _repo.SaveThroughputSample(tp);
+                    _detector.OnThroughputSample(tp);
+                    _lastThroughput = DateTimeOffset.Now;
+                }
+
+                if (DateTimeOffset.Now - _lastPurge > TimeSpan.FromHours(1))
+                {
+                    _repo.Purge(_cfg.RetentionDays);
+                    _lastPurge = DateTimeOffset.Now;
+                }
+            }
+            catch (OperationCanceledException) { break; }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[BŁĄD pętli] {ex.Message}");
             }
 
-            if (_cfg.ThroughputEnabled &&
-                DateTimeOffset.Now - _lastThroughput > TimeSpan.FromMinutes(_cfg.ThroughputIntervalMinutes))
-            {
-                var tp = await _throughput.MeasureAsync(ct);
-                _repo.SaveThroughputSample(tp);
-                _detector.OnThroughputSample(tp);
-                _lastThroughput = DateTimeOffset.Now;
-            }
-
-            _repo.Purge(_cfg.RetentionDays);
             try { await Task.Delay(TimeSpan.FromSeconds(_cfg.WifiSampleSeconds), ct); }
             catch (TaskCanceledException) { break; }
         }

@@ -11,7 +11,7 @@ public sealed class DefectDetector
     private readonly IClock _clock;
 
     private DateTimeOffset? _weakSince;
-    private bool _weakReported;
+    private Severity? _weakReportedSeverity;
 
     private readonly Queue<DateTimeOffset> _roamTimes = new();
     private readonly Queue<bool> _pingWindow = new();
@@ -27,7 +27,7 @@ public sealed class DefectDetector
 
     public void OnWifiSample(WifiSample s)
     {
-        if (s.State != WifiState.Connected) { _weakSince = null; _weakReported = false; return; }
+        if (s.State != WifiState.Connected) { _weakSince = null; _weakReportedSeverity = null; return; }
         EvaluateWeakSignal(s);
     }
 
@@ -37,16 +37,20 @@ public sealed class DefectDetector
         {
             _weakSince ??= s.Timestamp;
             var sustained = (s.Timestamp - _weakSince.Value).TotalSeconds;
-            if (!_weakReported && sustained >= _cfg.WeakSignalSustainSeconds)
+            if (sustained >= _cfg.WeakSignalSustainSeconds)
             {
                 var sev = s.RssiDbm <= _cfg.WeakSignalCriticalDbm ? Severity.Critical : Severity.Warning;
-                Raise(new Defect(_weakSince.Value, s.Timestamp, DefectType.WeakSignal, sev,
-                    s.RssiDbm, _cfg.WeakSignalWarnDbm, s.Bssid,
-                    $"Słaby sygnał {s.RssiDbm} dBm przez {sustained:F0}s na {s.Bssid}"));
-                _weakReported = true;
+                // Zgłoś raz na epizod, ale pozwól na jednorazową eskalację Warning -> Critical.
+                if (_weakReportedSeverity is null || sev > _weakReportedSeverity)
+                {
+                    Raise(new Defect(_weakSince.Value, s.Timestamp, DefectType.WeakSignal, sev,
+                        s.RssiDbm, _cfg.WeakSignalWarnDbm, s.Bssid,
+                        $"Słaby sygnał {s.RssiDbm} dBm przez {sustained:F0}s na {s.Bssid}"));
+                    _weakReportedSeverity = sev;
+                }
             }
         }
-        else { _weakSince = null; _weakReported = false; }
+        else { _weakSince = null; _weakReportedSeverity = null; }
     }
 
     public void OnWifiEvent(WifiEvent e)
