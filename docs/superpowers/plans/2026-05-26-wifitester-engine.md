@@ -567,7 +567,7 @@ public sealed class Repository : IDisposable
 
     public Repository(string dbPath)
     {
-        _conn = new SqliteConnection($"Data Source={dbPath}");
+        _conn = new SqliteConnection($"Data Source={dbPath};Pooling=False");
         _conn.Open();
         InitSchema();
     }
@@ -607,7 +607,7 @@ CREATE INDEX IF NOT EXISTS ix_lat_ts ON latency_samples(ts);");
 
     public void SaveLatencySample(LatencySample s) => _conn.Execute(
         @"INSERT INTO latency_samples VALUES(@ts,@target,@rtt,@ok)",
-        new { ts = U(s.Timestamp), s.Target, rtt = s.RttMs, ok = s.Success ? 1 : 0 });
+        new { ts = U(s.Timestamp), target = s.Target, rtt = s.RttMs, ok = s.Success ? 1 : 0 });
 
     public void SaveThroughputSample(ThroughputSample s) => _conn.Execute(
         @"INSERT INTO throughput_samples VALUES(@ts,@d,@u,@srv)",
@@ -856,7 +856,7 @@ Dopisz do `DefectDetectorTests.cs` w klasie:
         var (d, defects, c) = Make();
         // 20 próbek, 3 nieudane = 15% > 5%
         for (int i = 0; i < 20; i++)
-            d.OnLatencySample(new LatencySample(c.Now, "8.8.8.8", 10, success: i >= 3));
+            d.OnLatencySample(new LatencySample(c.Now, "8.8.8.8", 10, Success: i >= 3));
         Assert.Contains(defects, x => x.Type == DefectType.PacketLoss);
     }
 
