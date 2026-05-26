@@ -45,4 +45,41 @@ public class DefectDetectorTests
         d.OnLatencySample(new LatencySample(DateTimeOffset.UnixEpoch, "gateway", 150, true));
         Assert.Contains(defects, x => x.Type == DefectType.HighLatency);
     }
+
+    [Fact]
+    public void Disconnect_event_raises_defect()
+    {
+        var (d, defects, _) = Make();
+        d.OnWifiEvent(new WifiEvent(DateTimeOffset.UnixEpoch, WifiEventType.Disconnected, "ap1", null, "lost"));
+        Assert.Contains(defects, x => x.Type == DefectType.Disconnect);
+    }
+
+    [Fact]
+    public void Roaming_storm_raises_after_threshold()
+    {
+        var (d, defects, c) = Make();
+        for (int i = 0; i < 4; i++)
+        {
+            d.OnWifiEvent(new WifiEvent(c.Now, WifiEventType.Roamed, "ap1", "ap2", null));
+            c.Advance(TimeSpan.FromSeconds(30));
+        }
+        Assert.Contains(defects, x => x.Type == DefectType.RoamingStorm);
+    }
+
+    [Fact]
+    public void Packet_loss_above_threshold_raises()
+    {
+        var (d, defects, c) = Make();
+        for (int i = 0; i < 20; i++)
+            d.OnLatencySample(new LatencySample(c.Now, "8.8.8.8", 10, Success: i >= 3));
+        Assert.Contains(defects, x => x.Type == DefectType.PacketLoss);
+    }
+
+    [Fact]
+    public void Throughput_below_threshold_raises()
+    {
+        var (d, defects, _) = Make();
+        d.OnThroughputSample(new ThroughputSample(DateTimeOffset.UnixEpoch, 5, 5, "srv"));
+        Assert.Contains(defects, x => x.Type == DefectType.ThroughputDrop);
+    }
 }
