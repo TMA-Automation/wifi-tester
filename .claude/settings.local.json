@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"D:/Claude Projects/TMA/Tester WiFi\" log --oneline -5)",
+      "WebSearch",
+      "Bash(git init *)",
+      "Bash(printf \"bin/\\\\nobj/\\\\n*.user\\\\n.vs/\\\\npublish/\\\\n%%LOCALAPPDATA%%/\\\\n\")",
+      "Bash(git add *)",
+      "Bash(git -c user.name=Claude -c user.email=noreply@anthropic.com commit -q -m 'Dodaj specyfikację projektu WifiTester *)",
+      "Bash(git -c user.name=Claude -c user.email=noreply@anthropic.com commit -q -m 'Dodaj plan implementacji silnika \\(Plan 1\\) *)",
+      "Bash(dotnet --version)",
+      "Bash(git checkout *)",
+      "Bash(dotnet new *)",
+      "Bash(dotnet --list-sdks)",
+      "Bash(dotnet --list-runtimes)",
+      "Bash(dotnet sln *)",
+      "Bash(dotnet add *)",
+      "Bash(Remove-Item \"D:\\\\Claude Projects\\\\TMA\\\\Tester WiFi\\\\src\\\\WifiTester.Core\\\\Class1.cs\" -Force)",
+      "Bash(Remove-Item \"D:\\\\Claude Projects\\\\TMA\\\\Tester WiFi\\\\tests\\\\WifiTester.Tests\\\\UnitTest1.cs\" -Force)"
+    ]
+  }
+}
