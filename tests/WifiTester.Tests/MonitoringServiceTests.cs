@@ -11,7 +11,9 @@ public class MonitoringServiceTests
     {
         private readonly Queue<WifiSample> _samples;
         public FixedWifi(IEnumerable<WifiSample> s) => _samples = new(s);
+#pragma warning disable CS0067 // wymagane przez IWifiSource; roaming wyprowadzany przez RoamTracker
         public event EventHandler<WifiEvent>? WifiEventRaised;
+#pragma warning restore CS0067
         public WifiSample Sample() => _samples.Count > 1 ? _samples.Dequeue() : _samples.Peek();
     }
     private sealed class NoProbe : INetworkProbe

@@ -1,6 +1,7 @@
 using System.Text;
 using WifiTester.Core.Abstractions;
 using WifiTester.Core.Config;
+using WifiTester.Core.Monitoring;
 using WifiTester.Core.Probing;
 using WifiTester.Core.Reporting;
 using WifiTester.Core.Storage;
@@ -35,9 +36,28 @@ if (args.Length > 0 && args[0] == "report")
 cfg.PingTargets = cfg.PingTargets
     .Select(t => t == "gateway" ? (GatewayFinder.Get() ?? "127.0.0.1") : t).ToList();
 
-var loop = new MonitorLoop(cfg, new NetshWifiSource(), new PingNetworkProbe(),
-    new HttpThroughputTester(cfg.ThroughputUrl), repo, new SystemClock());
+var svc = new MonitoringService(cfg, new NetshWifiSource(), new PingNetworkProbe(),
+    new HttpThroughputTester(cfg.ThroughputUrl), new SystemClock());
+
+var lastPurge = DateTimeOffset.MinValue;
+svc.WifiSampleCollected += (_, s) => repo.SaveWifiSample(s);
+svc.WifiEventDetected += (_, e) => repo.SaveWifiEvent(e);
+svc.LatencyCollected += (_, l) => repo.SaveLatencySample(l);
+svc.ThroughputCollected += (_, t) => repo.SaveThroughputSample(t);
+svc.DefectDetected += (_, d) =>
+{
+    repo.SaveDefect(d);
+    Console.WriteLine($"[DEFEKT] {d.Type} {d.Severity}: {d.Description}");
+};
+svc.WifiSampleCollected += (_, _) =>
+{
+    if (DateTimeOffset.Now - lastPurge > TimeSpan.FromHours(1))
+    {
+        repo.Purge(cfg.RetentionDays);
+        lastPurge = DateTimeOffset.Now;
+    }
+};
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
-await loop.RunAsync(cts.Token);
+await svc.RunAsync(cts.Token);
