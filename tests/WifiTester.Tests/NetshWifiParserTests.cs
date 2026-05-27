@@ -41,4 +41,36 @@ There is 1 interface on the system:
         var s = NetshWifiParser.Parse("There is 1 interface on the system:\n\n    Name : Wi-Fi\n    State : disconnected\n", DateTimeOffset.UnixEpoch);
         Assert.Equal(WifiState.Disconnected, s.State);
     }
+
+    private const string Win11Sample = @"
+There is 1 interface on the system:
+
+    Name                   : Wi-Fi
+    Description            : Intel(R) Wi-Fi 6E AX211 160MHz
+    State                  : connected
+    SSID                   : TMA
+    AP BSSID               : 04:01:a1:24:fb:20
+    Band                   : 5 GHz
+    Channel                : 153
+    Radio type             : 802.11ax
+    Receive rate (Mbps)    : 432
+    Transmit rate (Mbps)   : 1201
+    Signal                 : 88%
+    Rssi                   : -65
+";
+
+    [Fact]
+    public void Parses_ap_bssid_label()
+    {
+        var s = NetshWifiParser.Parse(Win11Sample, DateTimeOffset.UnixEpoch);
+        Assert.Equal("04:01:a1:24:fb:20", s.Bssid);
+    }
+
+    [Fact]
+    public void Prefers_real_rssi_field_over_signal_percent()
+    {
+        var s = NetshWifiParser.Parse(Win11Sample, DateTimeOffset.UnixEpoch);
+        Assert.Equal(-65, s.RssiDbm);
+        Assert.Equal(88, s.SignalQuality);
+    }
 }

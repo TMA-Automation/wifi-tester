@@ -33,14 +33,16 @@ public static class NetshWifiParser
                 null, null, 0, 0, WifiBand.Unknown, 0, null, 0, 0);
 
         int signal = ParseInt(Get("Signal")?.TrimEnd('%'));
-        int rssi = -100 + signal / 2;
+        // Windows 11 podaje realne pole "Rssi"; starsze tylko "Signal %". Użyj realnego, gdy jest.
+        var realRssi = Get("Rssi");
+        int rssi = realRssi is not null ? ParseInt(realRssi) : -100 + signal / 2;
 
         return new WifiSample(
             ts,
             Get("Name") ?? "Wi-Fi",
             state,
             Get("SSID"),
-            Get("BSSID"),
+            Get("BSSID", "AP BSSID"),
             rssi,
             signal,
             ParseBand(Get("Band")),
