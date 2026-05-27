@@ -16,7 +16,21 @@
       "Bash(dotnet sln *)",
       "Bash(dotnet add *)",
       "Bash(Remove-Item \"D:\\\\Claude Projects\\\\TMA\\\\Tester WiFi\\\\src\\\\WifiTester.Core\\\\Class1.cs\" -Force)",
-      "Bash(Remove-Item \"D:\\\\Claude Projects\\\\TMA\\\\Tester WiFi\\\\tests\\\\WifiTester.Tests\\\\UnitTest1.cs\" -Force)"
+      "Bash(Remove-Item \"D:\\\\Claude Projects\\\\TMA\\\\Tester WiFi\\\\tests\\\\WifiTester.Tests\\\\UnitTest1.cs\" -Force)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(git commit *)",
+      "PowerShell(Join-Path *)",
+      "PowerShell(Get-Process *)",
+      "Bash(git -c user.name=\"Claude\" -c user.email=\"noreply@anthropic.com\" commit -q -m \"docs: zsynchronizuj plan z poprawkami z implementacji\")",
+      "Bash(git -c user.name=Claude -c user.email=noreply@anthropic.com commit -q -m 'fix: odporność pętli, eskalacja słabego sygnału, rzadszy purge + testy *)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(git push *)",
+      "PowerShell(dotnet run *)",
+      "PowerShell(dotnet test *)",
+      "PowerShell(git *)"
     ]
   }
 }
