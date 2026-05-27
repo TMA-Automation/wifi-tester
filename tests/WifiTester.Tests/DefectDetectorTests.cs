@@ -149,4 +149,31 @@ public class DefectDetectorTests
             d.OnLatencySample(new LatencySample(c.Now, "8.8.8.8", 10, Success: i != 0));
         Assert.DoesNotContain(defects, x => x.Type == DefectType.PacketLoss);
     }
+
+    [Fact]
+    public void Low_link_rate_with_good_signal_raises()
+    {
+        var (d, defects, _) = Make();
+        d.OnWifiSample(new WifiSample(DateTimeOffset.UnixEpoch, "Wi-Fi", WifiState.Connected,
+            "S", "ap1", -55, 80, WifiBand.Band5GHz, 36, "ax", 12, 12));
+        Assert.Contains(defects, x => x.Type == DefectType.LowLinkRate);
+    }
+
+    [Fact]
+    public void Low_link_rate_with_weak_signal_does_not_raise()
+    {
+        var (d, defects, _) = Make();
+        d.OnWifiSample(new WifiSample(DateTimeOffset.UnixEpoch, "Wi-Fi", WifiState.Connected,
+            "S", "ap1", -80, 30, WifiBand.Band5GHz, 36, "ax", 12, 12));
+        Assert.DoesNotContain(defects, x => x.Type == DefectType.LowLinkRate);
+    }
+
+    [Fact]
+    public void Healthy_link_rate_does_not_raise()
+    {
+        var (d, defects, _) = Make();
+        d.OnWifiSample(new WifiSample(DateTimeOffset.UnixEpoch, "Wi-Fi", WifiState.Connected,
+            "S", "ap1", -55, 80, WifiBand.Band5GHz, 36, "ax", 300, 300));
+        Assert.DoesNotContain(defects, x => x.Type == DefectType.LowLinkRate);
+    }
 }
