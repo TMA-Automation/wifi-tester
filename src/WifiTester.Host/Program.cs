@@ -1,9 +1,12 @@
+using System.Text;
 using WifiTester.Core.Abstractions;
 using WifiTester.Core.Config;
 using WifiTester.Core.Probing;
 using WifiTester.Core.Reporting;
 using WifiTester.Core.Storage;
 using WifiTester.Host;
+
+Console.OutputEncoding = Encoding.UTF8;
 
 var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WifiTester");
 Directory.CreateDirectory(dir);
