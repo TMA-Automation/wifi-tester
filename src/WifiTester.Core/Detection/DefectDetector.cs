@@ -29,6 +29,7 @@ public sealed class DefectDetector
     {
         if (s.State != WifiState.Connected) { _weakSince = null; _weakReportedSeverity = null; return; }
         EvaluateWeakSignal(s);
+        EvaluateLowLinkRate(s);
     }
 
     private void EvaluateWeakSignal(WifiSample s)
@@ -51,6 +52,15 @@ public sealed class DefectDetector
             }
         }
         else { _weakSince = null; _weakReportedSeverity = null; }
+    }
+
+    private void EvaluateLowLinkRate(WifiSample s)
+    {
+        // Niska wynegocjowana prędkość TX mimo dobrego sygnału (RSSI lepszy niż próg ostrzeżenia).
+        if (s.RssiDbm > _cfg.WeakSignalWarnDbm && s.TxRateMbps > 0 && s.TxRateMbps < _cfg.LowLinkRateMbps)
+            Raise(new Defect(s.Timestamp, s.Timestamp, DefectType.LowLinkRate, Severity.Warning,
+                s.TxRateMbps, _cfg.LowLinkRateMbps, s.Bssid,
+                $"Niska prędkość łącza {s.TxRateMbps} Mbps przy dobrym sygnale {s.RssiDbm} dBm na {s.Bssid}"));
     }
 
     public void OnWifiEvent(WifiEvent e)
