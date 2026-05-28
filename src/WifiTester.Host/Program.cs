@@ -28,6 +28,7 @@ if (args.Length > 0 && args[0] == "report")
     var outPath = Path.Combine(dir, $"raport_{to:yyyyMMdd_HHmm}.html");
     File.WriteAllText(outPath, html);
     File.WriteAllText(Path.ChangeExtension(outPath, ".csv"), CsvExporter.DefectsToCsv(defects));
+    File.WriteAllBytes(Path.ChangeExtension(outPath, ".pdf"), PdfReportGenerator.Generate(data));
     Console.WriteLine($"Raport zapisany: {outPath}");
     return;
 }
