@@ -1,6 +1,6 @@
 using System.Net.NetworkInformation;
 
-namespace WifiTester.Host;
+namespace WifiTester.Core.Probing;
 
 public static class GatewayFinder
 {
