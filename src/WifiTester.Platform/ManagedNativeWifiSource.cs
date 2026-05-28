@@ -1,12 +1,16 @@
-// ManagedNativeWifi 2.8.0 — API potwierdzone refleksją na zainstalowanym pakiecie:
+// ManagedNativeWifi 3.0.2 — API potwierdzone refleksją na zainstalowanym pakiecie.
+// (Podniesiono z 2.8.0: wersja 2.x NIE udostępnia skojarzonego BSSID bieżącego połączenia;
+//  GetCurrentConnection/CurrentConnectionInfo.Bssid pojawiło się dopiero w 3.x.)
 //   NativeWifi.EnumerateInterfaces() -> InterfaceInfo { Guid Id, string Description, InterfaceState State }
 //   InterfaceState.Connected — stan połączenia.
 //   NativeWifi.EnumerateBssNetworks() -> IEnumerable<BssNetworkPack>
-//   BssNetworkPack { InterfaceInfo Interface, NetworkIdentifier Ssid, NetworkIdentifier Bssid,
-//                    PhyType PhyType, int SignalStrength (dBm), int LinkQuality (0-100),
+//   BssNetworkPack { InterfaceInfo InterfaceInfo, NetworkIdentifier Ssid, NetworkIdentifier Bssid,
+//                    PhyType PhyType, int Rssi (dBm), int LinkQuality (0-100),
 //                    int Frequency (kHz), float Band (GHz), int Channel }
-// UWAGA vs draft: RSSI to właściwość SignalStrength (nie "Rssi"); Bssid/Ssid to NetworkIdentifier.
-//   Frequency jest w kHz -> /1000 = MHz dla WifiBandClassifier.FromFrequencyMHz.
+// UWAGA vs draft: RSSI to właściwość Rssi; interfejs to InterfaceInfo (Interface jest [Obsolete]);
+//   Bssid/Ssid to NetworkIdentifier. Frequency w kHz -> /1000 = MHz dla FromFrequencyMHz.
+//   NativeWifi.GetCurrentConnection(Guid interfaceId) -> (ActionResult result, CurrentConnectionInfo value)
+//   CurrentConnectionInfo { NetworkIdentifier Bssid, ... } — skojarzony BSSID bieżącego AP.
 using ManagedNativeWifi;
 using WifiTester.Core.Abstractions;
 using WifiTester.Core.Models;
@@ -33,15 +37,23 @@ public sealed class ManagedNativeWifiSource : IWifiSource
                 return new WifiSample(ts, "Wi-Fi", WifiState.Disconnected,
                     null, null, 0, 0, WifiBand.Unknown, 0, null, 0, 0);
 
-            // ZNANE OGRANICZENIE (do naprawy w Planie 3, przed wpięciem tego źródła do hosta/GUI):
-            // wybieramy najsilniejszy widoczny BSS na interfejsie, co NIE musi być AP, z którym
-            // jesteśmy skojarzeni — przy wielu AP tej samej sieci może zwrócić inny BSSID/kanał.
-            // Docelowo: odczytać skojarzony BSSID z WLAN_CONNECTION_ATTRIBUTES i dopasować po Bssid,
-            // a najsilniejszy traktować tylko jako fallback.
-            var bss = NativeWifi.EnumerateBssNetworks()
-                .Where(b => b.Interface.Id == iface.Id)
-                .OrderByDescending(b => b.SignalStrength)
-                .FirstOrDefault();
+            // Skojarzony BSSID bieżącego połączenia (nie najsilniejszy widoczny BSS).
+            // API: NativeWifi.GetCurrentConnection(Guid interfaceId)
+            //   -> (ActionResult result, CurrentConnectionInfo value)
+            //   CurrentConnectionInfo.Bssid : NetworkIdentifier (skojarzony BSSID bieżącego AP).
+            var (connResult, connInfo) = NativeWifi.GetCurrentConnection(iface.Id);
+            var connectedBssid = connResult == ActionResult.Success
+                ? connInfo.Bssid?.ToString()
+                : null;
+
+            var candidates = NativeWifi.EnumerateBssNetworks()
+                .Where(b => b.InterfaceInfo.Id == iface.Id)
+                .ToList();
+
+            var bss = (connectedBssid is not null
+                    ? candidates.FirstOrDefault(b => string.Equals(b.Bssid.ToString(), connectedBssid, StringComparison.OrdinalIgnoreCase))
+                    : null)
+                ?? candidates.OrderByDescending(b => b.Rssi).FirstOrDefault();
 
             if (bss is null)
                 return new WifiSample(ts, iface.Description ?? "Wi-Fi", WifiState.Connected,
@@ -54,15 +66,16 @@ public sealed class ManagedNativeWifiSource : IWifiSource
                 WifiState.Connected,
                 bss.Ssid.ToString(),
                 bss.Bssid.ToString(),
-                bss.SignalStrength,          // RSSI w dBm
+                bss.Rssi,                    // RSSI w dBm
                 bss.LinkQuality,             // 0-100
                 WifiBandClassifier.FromFrequencyMHz(freqMHz),
                 bss.Channel,
                 bss.PhyType.ToString(),
                 0, 0);
         }
-        catch
+        catch (Exception ex)
         {
+            Console.Error.WriteLine($"[WLAN] błąd odczytu: {ex.Message}");
             return new WifiSample(ts, "Wi-Fi", WifiState.NoAdapter, null, null, 0, 0,
                 WifiBand.Unknown, 0, null, 0, 0);
         }
