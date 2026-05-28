@@ -1151,4 +1151,10 @@ git commit -m "feat: raport PDF w host; aktualizacja README; pełny zielony zest
 
 **Spójność typów:** `MonitoringService` używa istniejących `IWifiSource`/`INetworkProbe`/`IThroughputTester`/`IClock`, `DefectDetector` (z metodami `OnWifiSample`/`OnWifiEvent`/`OnLatencySample`/`OnThroughputSample`) i `RoamTracker.Track`. `AlertService.OnDefect` przyjmuje `Defect`. `PdfReportGenerator.Generate` przyjmuje `ReportData` (jak `HtmlReportGenerator`). Sygnatury spójne między zadaniami.
 
+## Backlog do Planu 3 (z finalnego przeglądu kodu)
+
+- **[Ważne] `ManagedNativeWifiSource` wybiera najsilniejszy BSS, nie skojarzony AP.** Przed wpięciem natywnego źródła do hosta/GUI należy odczytać skojarzony BSSID z `WLAN_CONNECTION_ATTRIBUTES` i dopasować `BssNetworkPack` po `Bssid` (najsilniejszy tylko jako fallback). To wyjaśnia rozjazd kanał 112 (native) vs 153 (netsh) w weryfikacji. Źródło NIE jest jeszcze używane przez hosta, więc nie wysyła błędnych danych użytkownikom.
+- **[Ważne] `ManagedNativeWifiSource` łapie wszystkie wyjątki jako `NoAdapter`.** Rozróżnić „API rzuciło" od „brak adaptera"; logować do `Console.Error`.
+- **[Drobne] Throughput w `MonitoringService` używa `DateTimeOffset.Now`, nie `IClock`** — gałąź interwału przepustowości jest przez to nietestowalna `FakeClock`.
+
 **Zależności TFM:** `WifiTester.Platform` to net8.0-windows i NIE jest referowane przez net8.0-owy `WifiTester.Tests` — stąd `ManagedNativeWifiSource` tylko ręcznie; logika testowalna (`WifiBandClassifier`, `RoamTracker`) jest w Core. Host (net8.0) referuje Platform tylko jeśli ma używać natywnego źródła; jeśli Host pozostaje net8.0 (nie -windows), użycie `ManagedNativeWifiSource` wymaga zmiany TFM host na net8.0-windows — **odnotowane**: w Zadaniu 5 host nadal używa `NetshWifiSource` (działa na net8.0), a `ManagedNativeWifiSource` wejdzie do użycia w GUI (Plan 3, net8.0-windows). Host pozostaje na netsh do Planu 3.
