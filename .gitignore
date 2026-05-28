@@ -4,3 +4,4 @@ obj/
 .vs/
 publish/
 %LOCALAPPDATA%/
+.claude/settings.local.json
