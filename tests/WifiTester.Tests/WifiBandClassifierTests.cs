@@ -20,6 +20,8 @@ public class WifiBandClassifierTests
     [Theory]
     [InlineData(2412, WifiBand.Band24GHz)]
     [InlineData(5180, WifiBand.Band5GHz)]
+    [InlineData(5910, WifiBand.Band5GHz)]   // brzeg 5 GHz (dawne martwe pasmo 5900-5924)
+    [InlineData(5925, WifiBand.Band6GHz)]   // dolna granica 6 GHz
     [InlineData(5955, WifiBand.Band6GHz)]
     [InlineData(0, WifiBand.Unknown)]
     public void Classifies_frequency_to_band(int mhz, WifiBand expected)

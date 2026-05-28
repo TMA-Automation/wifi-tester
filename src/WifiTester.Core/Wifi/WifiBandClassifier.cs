@@ -8,7 +8,7 @@ public static class WifiBandClassifier
     public static WifiBand FromFrequencyMHz(int mhz) => mhz switch
     {
         >= 2400 and < 2500 => WifiBand.Band24GHz,
-        >= 4900 and < 5900 => WifiBand.Band5GHz,
+        >= 4900 and < 5925 => WifiBand.Band5GHz,
         >= 5925 and <= 7125 => WifiBand.Band6GHz,
         _ => WifiBand.Unknown
     };

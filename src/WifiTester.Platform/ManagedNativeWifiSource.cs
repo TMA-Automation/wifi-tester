@@ -33,6 +33,11 @@ public sealed class ManagedNativeWifiSource : IWifiSource
                 return new WifiSample(ts, "Wi-Fi", WifiState.Disconnected,
                     null, null, 0, 0, WifiBand.Unknown, 0, null, 0, 0);
 
+            // ZNANE OGRANICZENIE (do naprawy w Planie 3, przed wpięciem tego źródła do hosta/GUI):
+            // wybieramy najsilniejszy widoczny BSS na interfejsie, co NIE musi być AP, z którym
+            // jesteśmy skojarzeni — przy wielu AP tej samej sieci może zwrócić inny BSSID/kanał.
+            // Docelowo: odczytać skojarzony BSSID z WLAN_CONNECTION_ATTRIBUTES i dopasować po Bssid,
+            // a najsilniejszy traktować tylko jako fallback.
             var bss = NativeWifi.EnumerateBssNetworks()
                 .Where(b => b.Interface.Id == iface.Id)
                 .OrderByDescending(b => b.SignalStrength)
