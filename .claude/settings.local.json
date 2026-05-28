@@ -30,7 +30,26 @@
       "Bash(git push *)",
       "PowerShell(dotnet run *)",
       "PowerShell(dotnet test *)",
-      "PowerShell(git *)"
+      "PowerShell(git *)",
+      "PowerShell(New-Item *)",
+      "Bash(cat src/WifiTester.Core/Abstractions/IWifiSource.cs)",
+      "Bash(grep -r \"interface IWifiSource\" src/WifiTester.Core/Abstractions/)",
+      "Bash(rm -f .tmp_reflect.csx)",
+      "Bash(powershell -NoProfile -Command '$a=[System.Reflection.Assembly]::LoadFile\\(\\(Resolve-Path $env:USERPROFILE'\\\\''\\\\.nuget\\\\packages\\\\managednativewifi\\\\2.8.0\\\\lib\\\\net8.0\\\\ManagedNativeWifi.dll'\\\\''\\)\\); $a.GetExportedTypes\\(\\) | Where-Object { $_.Name -match '\\\\''NativeWifi|Bss|Interface|PhyType|InterfaceState'\\\\'' } | ForEach-Object { $_.FullName }')",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(powershell -NoProfile -Command ' *)",
+      "Bash(dotnet run *)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "Bash(git -c user.name=Claude -c user.email=noreply@anthropic.com commit -q -m 'docs: plan 3 \\(powłoka GUI: tray, dashboard, alerty, autostart, pakowanie\\) *)",
+      "Bash(netsh wlan *)",
+      "WebFetch(domain:github.com)",
+      "Bash(rm -rf /tmp/refl2)",
+      "Bash(mkdir -p /tmp/refl2)",
+      "Read(//tmp/**)",
+      "Bash(dotnet package *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(v['version']\\) for s in d['searchResult'] for v in s['packages']]\")",
+      "Bash(rm -rf /tmp/refl3)",
+      "Bash(mkdir -p /tmp/refl3)"
     ]
   }
 }

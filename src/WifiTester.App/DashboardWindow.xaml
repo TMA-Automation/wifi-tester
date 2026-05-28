@@ -1,0 +1,30 @@
+<Window x:Class="WifiTester.App.DashboardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="WifiTester — podgląd" Height="480" Width="640"
+        FontFamily="Segoe UI" FontSize="13">
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="Stan WiFi" FontSize="16" FontWeight="Bold" Margin="0,0,0,6"/>
+            <TextBlock><Run Text="Status: "/><Run Text="{Binding Status, Mode=OneWay}"/></TextBlock>
+            <TextBlock><Run Text="AP: "/><Run Text="{Binding Ap, Mode=OneWay}"/></TextBlock>
+            <TextBlock><Run Text="Sygnał: "/><Run Text="{Binding Signal, Mode=OneWay}"/></TextBlock>
+            <TextBlock><Run Text="Prędkość: "/><Run Text="{Binding LinkRate, Mode=OneWay}"/></TextBlock>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Margin="0,12,0,0">
+            <TextBlock Text="Latencja" FontSize="16" FontWeight="Bold" Margin="0,0,0,6"/>
+            <ItemsControl ItemsSource="{Binding Latencies}"/>
+        </StackPanel>
+        <DockPanel Grid.Row="2" Margin="0,12,0,0">
+            <TextBlock DockPanel.Dock="Top" FontSize="16" FontWeight="Bold" Margin="0,0,0,6">
+                <Run Text="Defekty ("/><Run Text="{Binding DefectCount, Mode=OneWay}"/><Run Text=")"/>
+            </TextBlock>
+            <ListBox ItemsSource="{Binding Defects}"/>
+        </DockPanel>
+    </Grid>
+</Window>
