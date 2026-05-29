@@ -19,6 +19,16 @@ packet loss, spadki przepustowości, niską prędkość łącza mimo dobrego syg
 ## Raporty
 HTML, CSV i PDF: `dotnet run --project src/WifiTester.Host -- report`.
 
-## Dalej
-Plan 3 dodaje powłokę GUI: WPF dashboard na żywo, ikona w trayu, alerty wizualne,
-autostart i pakowanie do jednego .exe.
+## Aplikacja GUI (zalecane uruchomienie)
+`dotnet run --project src/WifiTester.App` — działa w zasobniku (tray), dashboard na żywo
+(dwuklik w ikonę), alerty w trayu, „Generuj raport", przełącznik autostartu.
+
+Pojedynczy plik wykonywalny:
+`dotnet publish src/WifiTester.App -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true`
+→ `...\publish\WifiTester.App.exe`.
+
+Konsolowy host (headless/CI) pozostaje dostępny: `dotnet run --project src/WifiTester.Host`.
+
+## Status
+Pełna aplikacja z architektury A: tray + autostart + dashboard + alerty + raporty (HTML/CSV/PDF),
+natywne źródło WLAN (realny BSSID/RSSI skojarzonego AP).
