@@ -26,12 +26,26 @@ internal sealed class TrayIcon : IDisposable
 
         _icon = new NotifyIcon
         {
-            Icon = SystemIcons.Information,
+            Icon = LoadAppIcon(),
             Visible = true,
             Text = "WifiTester",
             ContextMenuStrip = menu
         };
         _icon.DoubleClick += (_, _) => OpenDashboardRequested?.Invoke();
+    }
+
+    private static Icon LoadAppIcon()
+    {
+        try
+        {
+            var uri = new Uri("pack://application:,,,/wifitester.ico");
+            using var stream = System.Windows.Application.GetResourceStream(uri)!.Stream;
+            return new Icon(stream, new Size(16, 16));   // rozmiar pasujący do zasobnika
+        }
+        catch
+        {
+            return SystemIcons.Information;   // awaryjnie, gdyby zasób był niedostępny
+        }
     }
 
     private void ToggleAutostart()
