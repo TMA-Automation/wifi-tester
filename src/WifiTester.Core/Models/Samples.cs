@@ -1,6 +1,6 @@
 namespace WifiTester.Core.Models;
 
-public enum WifiState { Connected, Disconnected, NoAdapter }
+public enum WifiState { Connected, Disconnected, NoAdapter, LocationDenied }
 public enum WifiBand { Unknown, Band24GHz, Band5GHz, Band6GHz }
 public enum WifiEventType { Connected, Disconnected, Roamed, SignalChange }
 

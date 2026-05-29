@@ -1,0 +1,44 @@
+<Window x:Class="WifiTester.App.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ustawienia — WifiTester" Height="430" Width="480"
+        Icon="/wifitester.ico" WindowStartupLocation="CenterOwner"
+        Background="{StaticResource Bg}" FontFamily="Segoe UI" FontSize="13">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="{StaticResource HdrBg}" Padding="16,12">
+            <TextBlock Text="Ustawienia" FontSize="16" FontWeight="Bold"
+                       Foreground="{StaticResource HdrTxt}"/>
+        </Border>
+
+        <StackPanel Grid.Row="1" Margin="16">
+            <TextBlock Text="Cele ping (po przecinku; słowo gateway oznacza bramę)" Margin="0,0,0,4"/>
+            <TextBox x:Name="PingTargetsBox" Padding="6,4"/>
+
+            <TextBlock Text="Próg wysokiej latencji (ms)" Margin="0,12,0,4"/>
+            <TextBox x:Name="LatencyBox" Padding="6,4"/>
+
+            <TextBlock Text="Próg utraty pakietów (%)" Margin="0,12,0,4"/>
+            <TextBox x:Name="LossBox" Padding="6,4"/>
+
+            <TextBlock Text="Próg słabego sygnału (dBm, np. -75)" Margin="0,12,0,4"/>
+            <TextBox x:Name="WeakBox" Padding="6,4"/>
+
+            <TextBlock Text="Przechowywanie danych (dni)" Margin="0,12,0,4"/>
+            <TextBox x:Name="RetentionBox" Padding="6,4"/>
+
+            <TextBlock Text="Zmiany zaczną działać po ponownym uruchomieniu aplikacji."
+                       Foreground="{StaticResource Muted}" Margin="0,14,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16">
+            <Button Content="Anuluj" Padding="14,6" Margin="0,0,8,0" Cursor="Hand" Click="OnCancel"/>
+            <Button Content="Zapisz" Style="{StaticResource PrzyciskGlowny}" Click="OnSave"/>
+        </StackPanel>
+    </Grid>
+</Window>

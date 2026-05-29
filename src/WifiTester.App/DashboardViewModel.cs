@@ -3,6 +3,7 @@ using System.ComponentModel;
 using WifiTester.Core.Dashboard;
 using WifiTester.Core.Models;
 using WifiTester.Core.Monitoring;
+using WifiTester.Core.Updates;
 
 namespace WifiTester.App;
 
@@ -18,6 +19,20 @@ public sealed class DashboardViewModel : INotifyPropertyChanged
     public string Signal { get; private set; } = "—";
     public string LinkRate { get; private set; } = "—";
     public int DefectCount { get; private set; }
+
+    public string Version => "v" + AppInfo.Version;
+
+    public bool UpdateAvailable { get; private set; }
+    public string UpdateText { get; private set; } = "";
+
+    public void SetUpdate(UpdateCheck? u)
+    {
+        UpdateAvailable = u is { Available: true };
+        UpdateText = UpdateAvailable
+            ? $"⬆  Dostępna aktualizacja: v{u!.Latest} (aktualna: {Version})"
+            : "";
+        Raise(nameof(UpdateAvailable)); Raise(nameof(UpdateText));
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -37,7 +52,15 @@ public sealed class DashboardViewModel : INotifyPropertyChanged
     private void RefreshWifi()
     {
         var w = _state.LatestWifi;
-        Status = w is null ? "—" : w.State.ToString();
+        Status = w?.State switch
+        {
+            null => "—",
+            WifiState.Connected => "Połączono",
+            WifiState.Disconnected => "Rozłączono",
+            WifiState.NoAdapter => "Brak karty WiFi",
+            WifiState.LocationDenied => "Brak dostępu — włącz usługi lokalizacji w Windows",
+            _ => w.State.ToString()
+        };
         Ap = w is { State: WifiState.Connected } ? $"{w.Ssid} / {w.Bssid} (kan. {w.Channel}, {w.Band})" : "—";
         Signal = w is { State: WifiState.Connected } ? $"{w.RssiDbm} dBm ({w.SignalQuality}%)" : "—";
         LinkRate = w is { State: WifiState.Connected } ? $"tx {w.TxRateMbps} / rx {w.RxRateMbps} Mbps" : "—";

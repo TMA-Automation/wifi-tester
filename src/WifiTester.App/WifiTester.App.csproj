@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <Resource Include="wifitester.ico" />
+    <Resource Include="logotma.png" />
   </ItemGroup>
 
 </Project>
