@@ -11,8 +11,10 @@
 //   Bssid/Ssid to NetworkIdentifier. Frequency w kHz -> /1000 = MHz dla FromFrequencyMHz.
 //   NativeWifi.GetCurrentConnection(Guid interfaceId) -> (ActionResult result, CurrentConnectionInfo value)
 //   CurrentConnectionInfo { NetworkIdentifier Bssid, ... } — skojarzony BSSID bieżącego AP.
+using System.ComponentModel;
 using ManagedNativeWifi;
 using WifiTester.Core.Abstractions;
+using WifiTester.Core.Diagnostics;
 using WifiTester.Core.Models;
 using WifiTester.Core.Wifi;
 
@@ -75,9 +77,29 @@ public sealed class ManagedNativeWifiSource : IWifiSource
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"[WLAN] błąd odczytu: {ex.Message}");
+            // Win32 5 = ERROR_ACCESS_DENIED. Native WiFi API odmawia danych WLAN,
+            // gdy w Windows wyłączone są usługi lokalizacji (SSID/BSSID to dane lokalizacyjne).
+            if (IsAccessDenied(ex))
+            {
+                Log.Write("[WLAN] odmowa dostępu — włącz usługi lokalizacji (Ustawienia → Prywatność → Lokalizacja, w tym dostęp aplikacji klasycznych).");
+                return new WifiSample(ts, "Wi-Fi", WifiState.LocationDenied, null, null, 0, 0,
+                    WifiBand.Unknown, 0, null, 0, 0);
+            }
+            Log.Write($"[WLAN] błąd odczytu: {ex.Message}");
             return new WifiSample(ts, "Wi-Fi", WifiState.NoAdapter, null, null, 0, 0,
                 WifiBand.Unknown, 0, null, 0, 0);
         }
+    }
+
+    private static bool IsAccessDenied(Exception ex)
+    {
+        for (var e = ex; e is not null; e = e.InnerException)
+        {
+            if (e is Win32Exception w32 && w32.NativeErrorCode == 5) return true;
+            if (e.Message.Contains("Odmowa dostępu", StringComparison.OrdinalIgnoreCase)
+                || e.Message.Contains("Access is denied", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
     }
 }
