@@ -17,6 +17,14 @@ public class UpdateServiceTests
     }
 
     [Fact]
+    public void Tolerates_bom_and_whitespace_in_version()
+    {
+        // version.txt z BOM/spacjami nie może psuć wykrywania aktualizacji.
+        Assert.True(UpdateService.CompareVersions("﻿1.2", "1.1") > 0);
+        Assert.Equal(0, UpdateService.CompareVersions(" 1.1 ", "1.1"));
+    }
+
+    [Fact]
     public async Task Check_returns_null_on_unreachable_repo()
     {
         // Repo nie istnieje → cicho null (brak aktualizacji), nigdy wyjątek.
