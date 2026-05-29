@@ -3,5 +3,6 @@ obj/
 *.user
 .vs/
 publish/
+dist/
 %LOCALAPPDATA%/
 .claude/settings.local.json
