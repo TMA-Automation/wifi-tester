@@ -18,11 +18,18 @@ public static class UpdateService
         var pb = b.Split('.');
         for (int i = 0; i < Math.Max(pa.Length, pb.Length); i++)
         {
-            int x = i < pa.Length && int.TryParse(pa[i], out var v) ? v : 0;
-            int y = i < pb.Length && int.TryParse(pb[i], out var w) ? w : 0;
+            int x = i < pa.Length ? Digits(pa[i]) : 0;
+            int y = i < pb.Length ? Digits(pb[i]) : 0;
             if (x != y) return x.CompareTo(y);
         }
         return 0;
+    }
+
+    // Wyłuskuje liczbę z segmentu, ignorując nie-cyfry (np. BOM/spacje), by porównanie było odporne.
+    private static int Digits(string segment)
+    {
+        var s = new string(segment.Where(char.IsDigit).ToArray());
+        return int.TryParse(s, out var n) ? n : 0;
     }
 
     public static async Task<UpdateCheck?> CheckAsync(
@@ -40,7 +47,8 @@ public static class UpdateService
                 $"https://api.github.com/repos/{repo}/contents/version.txt", ct);
             using var verDoc = JsonDocument.Parse(verJson);
             var b64 = verDoc.RootElement.GetProperty("content").GetString()!.Replace("\n", "");
-            var latest = Encoding.UTF8.GetString(Convert.FromBase64String(b64)).Trim();
+            // TrimStart('﻿') usuwa ewentualny BOM — char.IsWhiteSpace go nie łapie, więc Trim() nie wystarcza.
+            var latest = Encoding.UTF8.GetString(Convert.FromBase64String(b64)).TrimStart('﻿').Trim();
 
             var available = CompareVersions(latest, current) > 0;
             if (!available)

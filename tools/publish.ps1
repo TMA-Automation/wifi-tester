@@ -6,7 +6,8 @@ $ErrorActionPreference = "Stop"
 dotnet publish src/WifiTester.App -c Release -r win-x64 --self-contained `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist
 
-Set-Content -Path version.txt -Value $Version -NoNewline -Encoding utf8
+# UWAGA: bez BOM — Set-Content -Encoding utf8 (PS 5.1) dodaje BOM, co psuje parser wersji.
+[System.IO.File]::WriteAllText((Join-Path (Get-Location) "version.txt"), $Version, (New-Object System.Text.UTF8Encoding $false))
 
 $exe = "dist\WifiTester.App.exe"
 $mb = [math]::Round((Get-Item $exe).Length / 1MB, 0)
